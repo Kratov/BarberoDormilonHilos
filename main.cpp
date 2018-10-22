@@ -136,7 +136,6 @@ void barberWaitsClientRunnable(const unsigned int barberId)
 			waitHairCut(nextClient, barberId);
 		}
 		else {
-			cout << "\n Barbero #" << barberId<< " Durmiendo";
 		}
 	}
 }
@@ -148,17 +147,24 @@ void doorWaitsClientRunnable()
 		if (inUseChairs < NUMBER_CHAIRS)
 		{
 			this_thread::sleep_for(chrono::seconds(rand() % 2 + 1));
+			criticalProcess.lock();
 			cout << "\nIngresa cliente (Tiempo) " << (num = rand() % 20 + 1);
+			criticalProcess.unlock();
 			Node * item = createNode(++nodeNumber, num);
 			pushNode(head, tail, item);
 			inUseChairs++;
 		}
 	}
 }
-
+	
 void showResultsRunnable()
 {
-	showQueue(head);
+	while (repeat)
+	{
+		criticalProcess.lock();
+		showQueue(head);
+		criticalProcess.unlock();
+	}
 }
 
 void waitHairCut(Node * client, const unsigned int barberId)
@@ -167,7 +173,9 @@ void waitHairCut(Node * client, const unsigned int barberId)
 	{
 		for (int i = 1; i <= client->value; i++)
 		{
+			criticalProcess.lock();
 			cout << "\nBarbero " << barberId << " Cortando pelo del cliente #" << client->arrivalNumber << " Tiempo " << i << " de " << client->value << "/s";
+			criticalProcess.unlock();
 			this_thread::sleep_for(chrono::seconds(1));
 		}
 	}
@@ -189,7 +197,7 @@ int main() {
 			
 
 			// ===== MOSTRAR RESULTADOS ===== 
-			thread hShowResultsThread(showResultsRunnable);
+			//thread hShowResultsThread(showResultsRunnable);
 			// ===== FIN MOSTRAR RESULTADOS =====
 
 			// ===== ESPERAR CLIENTE PUERTA ===== 
@@ -203,7 +211,7 @@ int main() {
 			// ===== ESPERAR PUERTA =====
 
 			// ===== UNIR HILOS AL PROCESO MAIN ===== 
-			hShowResultsThread.join();
+			//hShowResultsThread.join();
 			for (int i = 0; i < NUMBER_BARBERS; i++)
 				hBarberThreads[i].join();
 			hDoorThread.join();
